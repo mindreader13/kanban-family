@@ -40,8 +40,8 @@ export class TaskModal {
         // Reset tags
         this.updateTagsDisplay();
         
-        // Reset subtasks
-        this.resetSubtasks(task ? task.subtasks : null);
+        // Reset subtasks - only if it's a new task or editing existing
+        this.resetSubtasks(task ? task.subtasks : []);
         
         titleEl.textContent = task ? '編輯任務' : '新增任務';
         modal.classList.add('active');
@@ -111,7 +111,10 @@ export class TaskModal {
 
     // Subtask handling
     addSubtask() {
+        if (!window.taskModal) return; // Safety check
         const container = document.getElementById('subtasks-container');
+        if (!container) return;
+        
         const newItem = document.createElement('div');
         newItem.className = 'subtask-item';
         newItem.innerHTML = `
