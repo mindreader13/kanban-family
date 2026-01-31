@@ -112,13 +112,16 @@ export class TaskModal {
     // Subtask handling
     addSubtask() {
         const container = document.getElementById('subtasks-container');
-        container.innerHTML += `
-            <div class="subtask-item">
-                <input type="checkbox" onchange="taskModal.updateSubtaskStatus(this)">
-                <input type="text" placeholder="輸入子任務" onkeypress="if(event.key==='Enter'){event.preventDefault();taskModal.addSubtask();}">
-                <button class="task-btn" onclick="taskModal.removeSubtask(this)">✕</button>
-            </div>
+        const newItem = document.createElement('div');
+        newItem.className = 'subtask-item';
+        newItem.innerHTML = `
+            <input type="checkbox" onchange="taskModal.updateSubtaskStatus(this)">
+            <input type="text" placeholder="輸入子任務" onkeypress="if(event.key==='Enter'){event.preventDefault();taskModal.addSubtask();}">
+            <button class="task-btn" onclick="taskModal.removeSubtask(this)">✕</button>
         `;
+        container.appendChild(newItem);
+        // Focus on the new input
+        newItem.querySelector('input[type="text"]').focus();
     }
 
     removeSubtask(btn) {
