@@ -21,8 +21,21 @@ export class TaskModal {
         // Reset form
         document.getElementById('task-title').value = task ? task.title : '';
         document.getElementById('task-desc').value = task ? task.description || '' : '';
-        document.getElementById('task-due').value = task ? task.due || '' : '';
-        document.getElementById('task-due-time').value = '';
+        
+        // Split date and time from due field
+        let dueDate = '';
+        let dueTime = '';
+        if (task && task.due) {
+            if (task.due.includes('T')) {
+                const parts = task.due.split('T');
+                dueDate = parts[0];
+                dueTime = parts[1] ? parts[1].substring(0, 5) : '';
+            } else {
+                dueDate = task.due;
+            }
+        }
+        document.getElementById('task-due').value = dueDate;
+        document.getElementById('task-due-time').value = dueTime;
         
         // Reset tags
         this.updateTagsDisplay();
