@@ -16,7 +16,14 @@ window.draggedTask = null;
 let taskStore = null;
 let boardStore = null;
 let themeManager = null;
-window.taskModal = null;  // Make global for onclick handlers
+window.taskModal = null;
+
+// Save task function (defined early for modal to use)
+window.saveTask = async (task) => {
+    if (taskStore) {
+        await taskStore.saveTask(task);
+    }
+};
 
 // Initialize app
 async function init() {
@@ -159,10 +166,6 @@ window.openTaskModal = (status, taskId = null) => {
     } else {
         taskModal.open(status, null);
     }
-};
-
-window.saveTask = async (task) => {
-    await taskStore.saveTask(task);
 };
 
 window.deleteTask = async (id) => {
