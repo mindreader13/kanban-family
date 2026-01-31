@@ -59,6 +59,12 @@ export class TaskModal {
             return;
         }
 
+        // Prevent double submit
+        const saveBtn = document.querySelector('#task-modal .btn-primary');
+        if (saveBtn.disabled) return;
+        saveBtn.disabled = true;
+        saveBtn.textContent = '儲存中...';
+
         const description = document.getElementById('task-desc').value.trim();
         const due = document.getElementById('task-due').value;
         const dueTime = document.getElementById('task-due-time').value;
@@ -78,6 +84,11 @@ export class TaskModal {
         };
 
         await this.onSave(task);
+        
+        // Reset button state
+        saveBtn.disabled = false;
+        saveBtn.textContent = '儲存';
+        
         this.close();
     }
 
