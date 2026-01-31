@@ -16,13 +16,17 @@ export class TaskComponent {
         const dueClass = this.getDueClass(this.task.due);
         const subtasksHtml = this.renderSubtasks();
         const tagsHtml = this.renderTags();
+        const quickActions = this.renderQuickActions();
 
         return `
             <div class="task" 
                  draggable="true" 
                  data-id="${this.task.id}"
+                 data-status="${this.task.status}"
                  ondragstart="${this.onDragStart}"
-                 ondragend="${this.onDragEnd}">
+                 ondragend="${this.onDragEnd}"
+                 tabindex="0"
+                 onkeydown="handleTaskKeydown(event, '${this.task.id}', '${this.task.status}')">
                 <div class="task-actions">
                     <button class="task-btn" onclick="${this.onEdit}('${this.task.id}')">✏️</button>
                     <button class="task-btn" onclick="${this.onArchive}('${this.task.id}')">📦</button>
@@ -35,8 +39,24 @@ export class TaskComponent {
                     ${tagsHtml}
                 </div>
                 ${subtasksHtml}
+                ${quickActions}
             </div>
         `;
+    }
+
+    renderQuickActions() {
+        const currentStatus = this.task.status;
+        let actions = '';
+
+        if (currentStatus === 'todo') {
+            actions = `<button class="task-btn" style="color: #4facfe; font-size: 0.8rem;" onclick="moveTaskTo('${this.task.id}', 'inprogress')">🚀 進行中</button>`;
+        } else if (currentStatus === 'inprogress') {
+            actions = `<button class="task-btn" style="color: #43e97b; font-size: 0.8rem;" onclick="moveTaskTo('${this.task.id}', 'done')">✅ 完成</button>`;
+        } else if (currentStatus === 'done') {
+            actions = `<button class="task-btn" style="color: #f093fb; font-size: 0.8rem;" onclick="moveTaskTo('${this.task.id}', 'todo')">📝 待處理</button>`;
+        }
+
+        return actions ? `<div class="quick-actions" style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border-color);">${actions}</div>` : '';
     }
 
     renderSubtasks() {

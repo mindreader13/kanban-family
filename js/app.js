@@ -193,6 +193,34 @@ window.toggleSubtask = async (taskId, subtaskIndex) => {
     }
 };
 
+// Quick status change
+window.moveTaskTo = async (taskId, newStatus) => {
+    await taskStore.updateStatus(taskId, newStatus);
+};
+
+// Keyboard shortcuts for tasks
+window.handleTaskKeydown = (event, taskId, currentStatus) => {
+    if (event.key === '1') {
+        event.preventDefault();
+        taskStore.updateStatus(taskId, 'todo');
+    } else if (event.key === '2') {
+        event.preventDefault();
+        taskStore.updateStatus(taskId, 'inprogress');
+    } else if (event.key === '3') {
+        event.preventDefault();
+        taskStore.updateStatus(taskId, 'done');
+    } else if (event.key === 'e' || event.key === 'E') {
+        event.preventDefault();
+        const task = taskStore.tasks.find(t => t.id === taskId);
+        if (task) window.openTaskModal(task.status, taskId);
+    } else if (event.key === 'Delete' || event.key === 'Backspace') {
+        event.preventDefault();
+        if (confirm('確定要刪除這個任務嗎？')) {
+            taskStore.deleteTask(taskId);
+        }
+    }
+};
+
 // Drag & Drop
 function setupDragDrop() {
     window.dragStart = (e) => {
