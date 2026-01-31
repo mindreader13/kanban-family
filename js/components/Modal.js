@@ -122,16 +122,15 @@ export class TaskModal {
 
     // Subtask handling
     addSubtask() {
-        if (!window.taskModal) return; // Safety check
         const container = document.getElementById('subtasks-container');
         if (!container) return;
         
         const newItem = document.createElement('div');
         newItem.className = 'subtask-item';
         newItem.innerHTML = `
-            <input type="checkbox" onchange="taskModal.updateSubtaskStatus(this)">
-            <input type="text" placeholder="輸入子任務" onkeypress="if(event.key==='Enter'){event.preventDefault();taskModal.addSubtask();}">
-            <button class="task-btn" onclick="taskModal.removeSubtask(this)">✕</button>
+            <input type="checkbox" onchange="window.taskModal?.updateSubtaskStatus(this)">
+            <input type="text" placeholder="輸入子任務" onkeypress="if(event.key==='Enter'){event.preventDefault();window.taskModal?.addSubtask();}">
+            <button class="task-btn" onclick="window.taskModal?.removeSubtask(this)">✕</button>
         `;
         container.appendChild(newItem);
         // Focus on the new input
@@ -139,44 +138,50 @@ export class TaskModal {
     }
 
     removeSubtask(btn) {
+        if (!btn || !btn.parentElement) return;
         const container = document.getElementById('subtasks-container');
-        if (container.children.length > 1) {
+        if (container && container.children.length > 1) {
             btn.parentElement.remove();
         }
     }
 
     resetSubtasks(subtasks) {
         const container = document.getElementById('subtasks-container');
+        if (!container) return;
+        
         if (subtasks && subtasks.length > 0) {
             container.innerHTML = subtasks.map(st => `
                 <div class="subtask-item">
-                    <input type="checkbox" ${st.completed ? 'checked' : ''} onchange="taskModal.updateSubtaskStatus(this)">
-                    <input type="text" value="${st.text}" onkeypress="if(event.key==='Enter'){event.preventDefault();taskModal.addSubtask();}">
-                    <button class="task-btn" onclick="taskModal.removeSubtask(this)">✕</button>
+                    <input type="checkbox" ${st.completed ? 'checked' : ''} onchange="window.taskModal?.updateSubtaskStatus(this)">
+                    <input type="text" value="${st.text}" onkeypress="if(event.key==='Enter'){event.preventDefault();window.taskModal?.addSubtask();}">
+                    <button class="task-btn" onclick="window.taskModal?.removeSubtask(this)">✕</button>
                 </div>
             `).join('') + `
                 <div class="subtask-item">
-                    <input type="checkbox" onchange="taskModal.updateSubtaskStatus(this)">
-                    <input type="text" placeholder="輸入子任務" onkeypress="if(event.key==='Enter'){event.preventDefault();taskModal.addSubtask();}">
-                    <button class="task-btn" onclick="taskModal.removeSubtask(this)">✕</button>
+                    <input type="checkbox" onchange="window.taskModal?.updateSubtaskStatus(this)">
+                    <input type="text" placeholder="輸入子任務" onkeypress="if(event.key==='Enter'){event.preventDefault();window.taskModal?.addSubtask();}">
+                    <button class="task-btn" onclick="window.taskModal?.removeSubtask(this)">✕</button>
                 </div>
             `;
         } else {
             container.innerHTML = `
                 <div class="subtask-item">
-                    <input type="checkbox" onchange="taskModal.updateSubtaskStatus(this)">
-                    <input type="text" placeholder="輸入子任務" onkeypress="if(event.key==='Enter'){event.preventDefault();taskModal.addSubtask();}">
-                    <button class="task-btn" onclick="taskModal.removeSubtask(this)">✕</button>
+                    <input type="checkbox" onchange="window.taskModal?.updateSubtaskStatus(this)">
+                    <input type="text" placeholder="輸入子任務" onkeypress="if(event.key==='Enter'){event.preventDefault();window.taskModal?.addSubtask();}">
+                    <button class="task-btn" onclick="window.taskModal?.removeSubtask(this)">✕</button>
                 </div>
             `;
         }
     }
 
     getSubtasks() {
-        const items = document.querySelectorAll('#subtasks-container .subtask-item');
+        const container = document.getElementById('subtasks-container');
+        if (!container) return [];
+        
+        const items = container.querySelectorAll('.subtask-item');
         return Array.from(items).map(item => ({
-            text: item.querySelector('input[type="text"]').value,
-            completed: item.querySelector('input[type="checkbox"]').checked
+            text: item.querySelector('input[type="text"]')?.value || '',
+            completed: item.querySelector('input[type="checkbox"]')?.checked || false
         })).filter(st => st.text.trim());
     }
 

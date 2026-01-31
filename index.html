@@ -118,16 +118,16 @@
                 <label>子任務</label>
                 <div class="subtasks-list" id="subtasks-container">
                     <div class="subtask-item">
-                        <input type="checkbox" onchange="taskModal.updateSubtaskStatus(this)">
+                        <input type="checkbox" onchange="window.taskModal?.updateSubtaskStatus(this)">
                         <input type="text" placeholder="輸入子任務">
-                        <button class="task-btn" onclick="taskModal.removeSubtask(this)">✕</button>
+                        <button class="task-btn" onclick="window.taskModal?.removeSubtask(this)">✕</button>
                     </div>
                 </div>
-                <button class="add-subtask-btn" onclick="taskModal.addSubtask()">+ 新增子任務</button>
+                <button class="add-subtask-btn" onclick="window.taskModal?.addSubtask()">+ 新增子任務</button>
             </div>
             <div class="modal-actions">
-                <button class="btn btn-secondary" onclick="taskModal.close()">取消</button>
-                <button class="btn btn-primary" onclick="taskModal.save()">儲存</button>
+                <button class="btn btn-secondary" onclick="window.taskModal?.close()">取消</button>
+                <button class="btn btn-primary" onclick="window.taskModal?.save()">儲存</button>
             </div>
         </div>
     </div>
