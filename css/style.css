@@ -308,6 +308,22 @@ h1 {
     background: var(--border-color);
 }
 
+.quick-actions {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--border-color);
+    display: flex;
+    gap: 10px;
+}
+
+.quick-actions .task-btn {
+    font-size: 0.85rem;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+}
+
 .task-btn.delete:hover {
     background: rgba(255, 107, 107, 0.2);
     color: #ff6b6b;
