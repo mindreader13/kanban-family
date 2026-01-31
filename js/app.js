@@ -148,6 +148,9 @@ window.deleteCurrentBoard = async () => {
     if (!confirm('確定要刪除這個看板嗎？所有任務都會被刪除！')) return;
 
     await withErrorHandling(async () => {
+        // Delete all tasks in this board first
+        await boardStore.deleteTasksInBoard(window.currentBoard);
+        // Then delete the board
         await boardStore.deleteBoard(window.currentBoard);
         window.currentBoard = DEFAULT_BOARD;
         updateBoardSelector();

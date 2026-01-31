@@ -113,6 +113,20 @@ export class BoardStore {
         delete this.boards[boardId];
     }
 
+    // Helper to delete all tasks in a board (called from app.js)
+    async deleteTasksInBoard(boardId) {
+        const tasksRef = collection(db, 'users', this.userId, 'tasks');
+        const q = query(tasksRef);
+        const snapshot = await getDocs(q);
+        const batchDeletes = [];
+        snapshot.forEach(doc => {
+            if (doc.data().board === boardId) {
+                batchDeletes.push(deleteDoc(doc.ref));
+            }
+        });
+        await Promise.all(batchDeletes);
+    }
+
     getBoards() {
         return this.boards;
     }
