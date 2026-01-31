@@ -1,0 +1,15 @@
+{
+  "name": "kanban-family",
+  "version": "2.0.0",
+  "description": "Family Kanban Board with Firebase",
+  "scripts": {
+    "test": "node tests/run-tests.js",
+    "test:playwright": "npx playwright test tests/kanban.spec.js",
+    "serve": "npx http-server -p 8080",
+    "serve:python": "python3 -m http.server 8080"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "playwright": "^1.40.0"
+  }
+}
