@@ -79,8 +79,11 @@ window.signInWithGoogle = async () => {
 window.signOut = async () => {
     try {
         await signOut(auth);
+        // Clear state - onAuthStateChanged will handle UI update
     } catch (error) {
         console.error('Logout error:', error);
+        // Fallback: force reload
+        window.location.reload();
     }
 };
 
