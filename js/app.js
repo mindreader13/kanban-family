@@ -16,12 +16,12 @@ window.draggedTask = null;
 let taskStore = null;
 let boardStore = null;
 let themeManager = null;
-let taskModal = null;
+window.taskModal = null;  // Make global for onclick handlers
 
 // Initialize app
 async function init() {
     themeManager = new ThemeManager();
-    taskModal = new TaskModal(saveTask, () => taskModal.close());
+    window.taskModal = new TaskModal(window.saveTask, () => window.taskModal.close());
     
     // Auth state listener
     onAuthStateChanged(auth, async (user) => {
@@ -161,9 +161,9 @@ window.openTaskModal = (status, taskId = null) => {
     }
 };
 
-async function saveTask(task) {
+window.saveTask = async (task) => {
     await taskStore.saveTask(task);
-}
+};
 
 window.deleteTask = async (id) => {
     if (confirm('確定要刪除這個任務嗎？')) {
