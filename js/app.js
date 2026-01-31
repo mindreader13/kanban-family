@@ -134,6 +134,19 @@ window.switchBoard = (boardId) => {
     render();
 };
 
+window.deleteCurrentBoard = async () => {
+    if (window.currentBoard === 'default') {
+        alert('不能刪除預設看板');
+        return;
+    }
+    if (!confirm('確定要刪除這個看板嗎？所有任務都會被刪除！')) return;
+    
+    await boardStore.deleteBoard(window.currentBoard);
+    window.currentBoard = 'default';
+    updateBoardSelector();
+    render();
+};
+
 // Archive functions
 window.openArchiveModal = () => {
     const tasks = taskStore.getTasksForBoard(window.currentBoard);

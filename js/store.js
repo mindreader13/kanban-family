@@ -102,6 +102,17 @@ export class BoardStore {
         return id;
     }
 
+    async deleteBoard(boardId) {
+        if (boardId === 'default') {
+            alert('不能刪除預設看板');
+            return;
+        }
+        // Delete from Firestore
+        await deleteDoc(doc(this._boardsRef(), boardId));
+        // Remove from local
+        delete this.boards[boardId];
+    }
+
     getBoards() {
         return this.boards;
     }
