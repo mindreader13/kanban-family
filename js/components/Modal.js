@@ -1,6 +1,7 @@
-/**
- * Task Modal Component
- */
+import { escapeHtml, escapeAttr } from '../utils/sanitize.js';
+import { validateTaskTitle, validateTaskDescription, validateTags, validateSubtasks, ValidationError } from '../utils/validation.js';
+import { withErrorHandling, createLoadingState } from '../utils/errorHandler.js';
+
 export class TaskModal {
     constructor(onSave, onClose) {
         this.onSave = onSave;
@@ -53,52 +54,63 @@ export class TaskModal {
     }
 
     async save() {
-        const title = document.getElementById('task-title').value.trim();
-        if (!title) {
-            alert('請輸入任務名稱');
-            return;
-        }
-
-        // Prevent double submit
         const saveBtn = document.querySelector('#task-modal .btn-primary');
-        if (saveBtn.disabled) return;
-        saveBtn.disabled = true;
-        saveBtn.textContent = '儲存中...';
+        const loading = createLoadingState(saveBtn);
 
-        const description = document.getElementById('task-desc').value.trim();
-        const due = document.getElementById('task-due').value;
-        const dueTime = document.getElementById('task-due-time').value;
-        const dueDateTime = due && dueTime ? `${due}T${dueTime}:00` : due;
-        const subtasks = this.getSubtasks();
+        try {
+            loading.start();
 
-        const task = {
-            id: this.editingTask?.id,
-            title,
-            description,
-            due: dueDateTime || due,
-            tags: this.currentTags,
-            subtasks,
-            status: this.currentStatus,
-            board: window.currentBoard,
-            created: this.editingTask?.created || new Date().toISOString()
-        };
+            const titleInput = document.getElementById('task-title').value;
+            const descriptionInput = document.getElementById('task-desc').value;
+            const due = document.getElementById('task-due').value;
+            const dueTime = document.getElementById('task-due-time').value;
+            const dueDateTime = due && dueTime ? `${due}T${dueTime}:00` : due;
 
-        await this.onSave(task);
-        
-        // Reset button state
-        saveBtn.disabled = false;
-        saveBtn.textContent = '儲存';
-        
-        this.close();
+            const title = validateTaskTitle(titleInput);
+            const description = validateTaskDescription(descriptionInput);
+            const tags = validateTags(this.currentTags);
+            const subtasks = validateSubtasks(this.getSubtasks());
+
+            const task = {
+                id: this.editingTask?.id,
+                title,
+                description,
+                due: dueDateTime || due,
+                tags,
+                subtasks,
+                status: this.currentStatus,
+                board: window.currentBoard,
+                created: this.editingTask?.created || new Date().toISOString()
+            };
+
+            await this.onSave(task);
+            this.close();
+        } catch (error) {
+            if (error instanceof ValidationError) {
+                alert(error.message);
+            } else {
+                throw error;
+            }
+        } finally {
+            loading.stop();
+        }
     }
 
     // Tag handling
     addTag(text) {
-        if (text && !this.currentTags.find(t => t.text === text)) {
+        try {
+            if (!text || this.currentTags.length >= 5) {
+                return;
+            }
+            if (this.currentTags.find(t => t.text === text)) {
+                return;
+            }
             const types = ['work', 'personal', 'urgent', 'other'];
             const type = types[this.currentTags.length % types.length];
-            this.currentTags.push({ text, type });
+            this.currentTags.push({ text: text.substring(0, 20), type });
             this.updateTagsDisplay();
+        } catch (error) {
+            console.error('Error adding tag:', error);
         }
     }
 
@@ -110,12 +122,12 @@ export class TaskModal {
     updateTagsDisplay() {
         const container = document.getElementById('tags-container');
         container.innerHTML = this.currentTags.map(tag => `
-            <span class="tag-item tag-${tag.type}" style="background: var(--tag-${tag.type});">
-                ${tag.text}
-                <button onclick="taskModal.removeTag('${tag.text}')">×</button>
+            <span class="tag-item tag-${escapeAttr(tag.type)}" style="background: var(--tag-${escapeAttr(tag.type)});">
+                ${escapeHtml(tag.text)}
+                <button onclick="taskModal.removeTag('${escapeAttr(tag.text)}')">×</button>
             </span>
         `).join('') + `
-            <input type="text" id="tag-input" placeholder="輸入標籤並按 Enter" 
+            <input type="text" id="tag-input" placeholder="輸入標籤並按 Enter"
                    onkeypress="if(event.key==='Enter'){event.preventDefault();taskModal.addTag(this.value.trim());this.value='';}">
         `;
     }
@@ -148,12 +160,12 @@ export class TaskModal {
     resetSubtasks(subtasks) {
         const container = document.getElementById('subtasks-container');
         if (!container) return;
-        
+
         if (subtasks && subtasks.length > 0) {
             container.innerHTML = subtasks.map(st => `
                 <div class="subtask-item">
                     <input type="checkbox" ${st.completed ? 'checked' : ''} onchange="window.taskModal?.updateSubtaskStatus(this)">
-                    <input type="text" value="${st.text}" onkeypress="if(event.key==='Enter'){event.preventDefault();window.taskModal?.addSubtask();}">
+                    <input type="text" value="${escapeAttr(st.text)}" onkeypress="if(event.key==='Enter'){event.preventDefault();window.taskModal?.addSubtask();}">
                     <button class="task-btn" onclick="window.taskModal?.removeSubtask(this)">✕</button>
                 </div>
             `).join('') + `

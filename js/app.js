@@ -7,6 +7,10 @@ import { ThemeManager } from './theme.js';
 import { TaskComponent } from './components/Task.js';
 import { ColumnComponent } from './components/Column.js';
 import { TaskModal } from './components/Modal.js';
+import { escapeHtml, escapeAttr } from './utils/sanitize.js';
+import { validateBoardName } from './utils/validation.js';
+import { withErrorHandling, showToast } from './utils/errorHandler.js';
+import { STATUS, DEFAULT_BOARD } from './utils/constants.js';
 import { signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
 // Global state
@@ -110,15 +114,17 @@ window.closeBoardModal = () => {
 };
 
 window.createBoard = async () => {
-    const name = document.getElementById('board-name').value.trim();
-    if (!name) {
-        alert('請輸入看板名稱');
-        return;
+    try {
+        const nameInput = document.getElementById('board-name').value;
+        const name = validateBoardName(nameInput);
+        const id = await boardStore.createBoard(name);
+        updateBoardSelector();
+        closeBoardModal();
+        switchBoard(id);
+        showToast('看板建立成功', 'success');
+    } catch (error) {
+        alert(error.message || '請輸入有效的看板名稱');
     }
-    const id = await boardStore.createBoard(name);
-    updateBoardSelector();
-    closeBoardModal();
-    switchBoard(id);
 };
 
 function updateBoardSelector() {
@@ -135,16 +141,19 @@ window.switchBoard = (boardId) => {
 };
 
 window.deleteCurrentBoard = async () => {
-    if (window.currentBoard === 'default') {
+    if (window.currentBoard === DEFAULT_BOARD) {
         alert('不能刪除預設看板');
         return;
     }
     if (!confirm('確定要刪除這個看板嗎？所有任務都會被刪除！')) return;
-    
-    await boardStore.deleteBoard(window.currentBoard);
-    window.currentBoard = 'default';
-    updateBoardSelector();
-    render();
+
+    await withErrorHandling(async () => {
+        await boardStore.deleteBoard(window.currentBoard);
+        window.currentBoard = DEFAULT_BOARD;
+        updateBoardSelector();
+        render();
+        showToast('看板已刪除', 'success');
+    }, '刪除看板失敗');
 };
 
 // Archive functions
@@ -154,11 +163,11 @@ window.openArchiveModal = () => {
     const container = document.getElementById('archive-list-modal');
     container.innerHTML = archivedTasks.length ? archivedTasks.map(task => `
         <div class="task" style="margin-bottom: 10px;">
-            <div class="task-title">${task.title}</div>
+            <div class="task-title">${escapeHtml(task.title)}</div>
             <div class="task-meta">
                 <span>${new Date(task.created).toLocaleDateString('zh-TW')}</span>
-                <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.8rem;" onclick="unarchiveTask('${task.id}')">復原</button>
-                <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.8rem; color: #ff6b6b;" onclick="deleteTask('${task.id}')">刪除</button>
+                <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.8rem;" onclick="unarchiveTask('${escapeAttr(task.id)}')">復原</button>
+                <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.8rem; color: #ff6b6b;" onclick="deleteTask('${escapeAttr(task.id)}')">刪除</button>
             </div>
         </div>
     `).join('') : '<p style="color: var(--text-muted); text-align: center;">沒有封存任務</p>';
@@ -211,20 +220,23 @@ window.toggleSubtask = async (taskId, subtaskIndex) => {
 
 // Quick status change
 window.moveTaskTo = async (taskId, newStatus) => {
-    await taskStore.updateStatus(taskId, newStatus);
+    await withErrorHandling(
+        () => taskStore.updateStatus(taskId, newStatus),
+        '更新任務狀態失敗'
+    );
 };
 
 // Keyboard shortcuts for tasks
 window.handleTaskKeydown = (event, taskId, currentStatus) => {
     if (event.key === '1') {
         event.preventDefault();
-        taskStore.updateStatus(taskId, 'todo');
+        withErrorHandling(() => taskStore.updateStatus(taskId, STATUS.TODO), '更新狀態失敗');
     } else if (event.key === '2') {
         event.preventDefault();
-        taskStore.updateStatus(taskId, 'inprogress');
+        withErrorHandling(() => taskStore.updateStatus(taskId, STATUS.IN_PROGRESS), '更新狀態失敗');
     } else if (event.key === '3') {
         event.preventDefault();
-        taskStore.updateStatus(taskId, 'done');
+        withErrorHandling(() => taskStore.updateStatus(taskId, STATUS.DONE), '更新狀態失敗');
     } else if (event.key === 'e' || event.key === 'E') {
         event.preventDefault();
         const task = taskStore.tasks.find(t => t.id === taskId);
@@ -232,7 +244,7 @@ window.handleTaskKeydown = (event, taskId, currentStatus) => {
     } else if (event.key === 'Delete' || event.key === 'Backspace') {
         event.preventDefault();
         if (confirm('確定要刪除這個任務嗎？')) {
-            taskStore.deleteTask(taskId);
+            withErrorHandling(() => taskStore.deleteTask(taskId), '刪除任務失敗');
         }
     }
 };
@@ -256,7 +268,10 @@ function setupDragDrop() {
         if (list && window.draggedTask) {
             const newStatus = list.id.replace('-list', '');
             const taskId = window.draggedTask.dataset.id;
-            await taskStore.updateStatus(taskId, newStatus);
+            await withErrorHandling(
+                () => taskStore.updateStatus(taskId, newStatus),
+                '更新任務狀態失敗'
+            );
         }
     };
 }
